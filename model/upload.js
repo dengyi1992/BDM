@@ -8,7 +8,7 @@ exports.uploadSerivce = function (room_id, paltform, data) {
     var options = {
         headers: {"Connection": "close"},
         url: config.upload.uploadurl + "dmBilibili" +
-        "&room_id=" + room_id,
+        "?room_id=" + room_id,
         method: 'POST',
         json: true,
         body: {data: data}
