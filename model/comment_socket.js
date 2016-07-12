@@ -12,14 +12,13 @@ var net = require('net'),
     util = require('util');
 
 
-
 /**
  * Bilibili 弹幕服务器 XMLSocket
  * @param base 配置数据
  * @constructor
  */
 function Client() {
-    
+
     // var DEFAULT_COMMENT_HOST = "livecmt-1.bilibili.com";
     // var DEFAULT_COMMENT_PORT = 788;
     var self = this;
@@ -46,8 +45,8 @@ function Client() {
      * @param callback
      * @returns {boolean}
      */
-    parser.setCallback = function(callback) {
-        if(!(callback instanceof Function)) return false;
+    parser.setCallback = function (callback) {
+        if (!(callback instanceof Function)) return false;
         this.callback = callback;
         return true;
     };
@@ -56,8 +55,8 @@ function Client() {
      * 读Socket数据
      * @param data
      */
-    parser.readSocketData = function(data) {
-        if(!parser.callback) return ;
+    parser.readSocketData = function (data) {
+        if (!parser.callback) return;
 
         this.buffer = Buffer.concat([this.buffer, data]);
         this.packetParser();
@@ -66,20 +65,20 @@ function Client() {
     /**
      * 解析数据包
      */
-    parser.packetParser = function() {
-        if(!parser.callback) return ;
+    parser.packetParser = function () {
+        if (!parser.callback) return;
 
-        while(this.buffer.length > 0) {
+        while (this.buffer.length > 0) {
             var packageLen = this.buffer.readUInt32BE(0);
-            if(this.buffer.length < packageLen) return ;//数据未接收完成 中断解析
+            if (this.buffer.length < packageLen) return;//数据未接收完成 中断解析
 
-            if(this.buffer.length < 6) return ; //异常包
+            if (this.buffer.length < 6) return; //异常包
             var headLen = this.buffer.readUInt16BE(4);
-            if(packageLen < headLen) return ; //异常包
+            if (packageLen < headLen) return; //异常包
 
             var _parser_Index = this.buffer.readUInt32BE(8);
             var jsonData;
-            switch(_parser_Index) {
+            switch (_parser_Index) {
                 case 3:
                     this.callback('login_success', this.buffer.readUInt32BE(headLen));
                     break;
@@ -128,16 +127,21 @@ function Client() {
     this.client = new net.Socket();
     this.client.setEncoding('binary');
 
-    this.buffer.setCallback(function(key, value) {
-        self.emit(key, value);
+    this.buffer.setCallback(function (key, value) {
+        try {
+            self.emit(key, value);
+        }
+        catch (e) {
+            console.log(e);
+        }
     });
 
     /**
      * [Event] Socket接收到数据
      */
-    this.client.on('data', function(data) {
+    this.client.on('data', function (data) {
         data = new Buffer(data, "binary");
-        if(data.length >= 1){
+        if (data.length >= 1) {
             self.buffer.readSocketData(data);
 
         }
@@ -146,7 +150,7 @@ function Client() {
     /**
      * [Event] Socket遇到错误
      */
-    this.client.on('error', function(error) {
+    this.client.on('error', function (error) {
         afterCloseSocket();
         //TODO: reConnect
         self.emit('server_error', error);
@@ -155,7 +159,7 @@ function Client() {
     /**
      * [Event] Socket关闭连接
      */
-    this.client.on('close', function() {
+    this.client.on('close', function () {
         afterCloseSocket();
         self.emit('close');
     });
@@ -170,7 +174,7 @@ function Client() {
     /**
      * [Event] 心跳包
      */
-    this.timerHandler = function() {
+    this.timerHandler = function () {
         self.sendSocketData(16, 16, 1, 2);
     };
 }
@@ -181,14 +185,14 @@ util.inherits(Client, events.EventEmitter);
  * @param live_id Comment房间ID
  * @param userId 用户ID
  */
-Client.prototype.connect = function(live_id, userId) {
+Client.prototype.connect = function (live_id, userId) {
     var self = this;
     if (this.state != 0) return;
 
-    this.client.connect(self.base.port, self.base.host, function() {
+    this.client.connect(self.base.port, self.base.host, function () {
         var data = {};
         data.roomid = live_id;
-        if(!userId) { //length
+        if (!userId) { //length
             userId = 100000000000000 + parseInt((200000000000000 * Math.random()).toFixed(0));
         }
         data.uid = userId;
@@ -206,11 +210,11 @@ Client.prototype.connect = function(live_id, userId) {
  * @param data
  * @returns {boolean}
  */
-Client.prototype.send = function(data) {
-    if(this.client.write(data)){
+Client.prototype.send = function (data) {
+    if (this.client.write(data)) {
         this.state = 1;
         return true;
-    }else{
+    } else {
         return false;
     }
 };
@@ -218,7 +222,7 @@ Client.prototype.send = function(data) {
 /**
  * [方法] 中断连接
  */
-Client.prototype.disconnect = function() {
+Client.prototype.disconnect = function () {
     this.client.destory();
 };
 
@@ -232,14 +236,14 @@ Client.prototype.disconnect = function() {
  * @param data
  * @returns {Buffer}
  */
-Client.prototype.sendSocketData = function(total_len, head_len, version, param4, param5, data) {
+Client.prototype.sendSocketData = function (total_len, head_len, version, param4, param5, data) {
     var bufferData = new Buffer(total_len);
     bufferData.writeUInt32BE(total_len, 0);
     bufferData.writeUInt16BE(head_len, 4);
     bufferData.writeUInt16BE(version, 6);
     bufferData.writeUInt32BE(param4, 8);
     bufferData.writeUInt32BE(param5 || 1, 12);
-    if(data) bufferData.write(data, head_len);
+    if (data) bufferData.write(data, head_len);
     this.send(bufferData);
 };
 module.exports = Client;
