@@ -64,12 +64,13 @@ request('http://120.27.94.166:2999/getRooms?platform=bilibli&topn=' + config.top
     if (error) {
         return console.log(error)
     }
-    // var parse = JSON.parse(body);
-    // for(var i=0;i<parse.data.length;i++){
-    //     rooms.push(parse.data[i].room_id)
-    // }
-    rooms.push(83264);
-    rooms.push(54817);
+    var parse = JSON.parse(body);
+    for(var i=0;i<parse.data.length;i++){
+        var roomId = parse.data[i].room_id;
+        rooms.push(parseInt(roomId));
+    }
+    // rooms.push(55041);
+    // rooms.push(427434);
 
     myEvents.on("dengyi", function (room) {
         Bi.Bi(room);
