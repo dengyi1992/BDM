@@ -22,5 +22,5 @@ exports.uploadSerivce = function (room_id, paltform, data) {
     }
 
     request(options, callback);
-    console.log(JSON.stringify({data:data}));
+    // console.log(JSON.stringify({data:data}));
 };
