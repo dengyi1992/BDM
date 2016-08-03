@@ -70,6 +70,7 @@ request('http://120.27.94.166:2999/getRooms?platform=bilibli&topn=' + config.top
         rooms.push(parseInt(roomId));
     }
     // rooms.push(55041);
+
     // rooms.push(427434);
 
     myEvents.on("dengyi", function (room) {
