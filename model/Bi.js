@@ -26,7 +26,7 @@ exports.Bi = function (roomid) {
                 break;
         }
         mydata.push(data);
-        if (mydata.length > 2) {
+        if (mydata.length > 100) {
             // console.log(JSON.stringify(mydata));
             upload.uploadSerivce(roomid, "bilibli", mydata);
             mydata = [];
