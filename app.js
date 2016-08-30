@@ -72,19 +72,24 @@ schedule.scheduleJob(rule, function () {
 
     request(options, function (error, response, body) {
         if (error) return console.log(error);
-        var parse = JSON.parse(body);
-        var rooms = [];
-        for (var i = 0; i < parse.data.length; i++) {
-            var roomId = parse.data[i].roomid;
-            rooms.push(parseInt(roomId));
+        try {
+            var parse = JSON.parse(body);
+            var rooms = [];
+            for (var i = 0; i < parse.data.length; i++) {
+                var roomId = parse.data[i].roomid;
+                rooms.push(parseInt(roomId));
+            }
+            myEvents.on("dengyi", function (room) {
+                Bi.Bi(room);
+            });
+            for (var i = 0; i < rooms.length; i++) {
+                console.log("-------------");
+                myEvents.emit("dengyi", rooms[i]);
+            }
+        } catch (e) {
+            console.log(e);
         }
-        myEvents.on("dengyi", function (room) {
-            Bi.Bi(room);
-        });
-        for (var i = 0; i < rooms.length; i++) {
-            console.log("-------------");
-            myEvents.emit("dengyi", rooms[i]);
-        }
+
         // console.log(body);
     });
     if (page > 30) {
