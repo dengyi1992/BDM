@@ -69,63 +69,57 @@ function Client() {
         if (!parser.callback) return;
 
         while (this.buffer.length > 0) {
-            try {
-                var packageLen = this.buffer.readUInt32BE(0);
-                if (this.buffer.length < packageLen) return;//数据未接收完成 中断解析
+            var packageLen = this.buffer.readUInt32BE(0);
+            if (this.buffer.length < packageLen) return;//数据未接收完成 中断解析
 
-                if (this.buffer.length < 6) return; //异常包
-                var headLen = this.buffer.readUInt16BE(4);
-                if (packageLen < headLen) return; //异常包
+            if (this.buffer.length < 6) return; //异常包
+            var headLen = this.buffer.readUInt16BE(4);
+            if (packageLen < headLen) return; //异常包
 
-                var _parser_Index = this.buffer.readUInt32BE(8);
-                var jsonData;
-                switch (_parser_Index) {
-                    case 3:
-                        this.callback('login_success', this.buffer.readUInt32BE(headLen));
-                        break;
-                    case 5:
-                        jsonData = this.buffer.slice(headLen, packageLen).toString('utf8');
-                        try {
-                            jsonData = JSON.parse(jsonData);
-                            // console.log(jsonData);
-                        } catch (e) {
-                            return this.callback('error', '意外的新弹幕信息');
-                        }
-                        this.callback('newCommentString', jsonData);
-                        break;
+            var _parser_Index = this.buffer.readUInt32BE(8);
+            var jsonData;
+            switch (_parser_Index) {
+                case 3:
+                    this.callback('login_success', this.buffer.readUInt32BE(headLen));
+                    break;
+                case 5:
+                    jsonData = this.buffer.slice(headLen, packageLen).toString('utf8');
+                    try {
+                        jsonData = JSON.parse(jsonData);
+                        // console.log(jsonData);
+                    } catch (e) {
+                        return this.callback('error', '意外的新弹幕信息');
+                    }
+                    this.callback('newCommentString', jsonData);
+                    break;
 
-                    /*case 6:
-                     jsonData = buffer.slice(headLen).toString('utf8');
+                /*case 6:
+                 jsonData = buffer.slice(headLen).toString('utf8');
+                 try {
+                 jsonData = JSON.parse(jsonData);
+                 } catch (e) {
+                 return this.callback('error', '意外的滚动信息');
+                 }
+                 this.callback('newScrollMessage', jsonData);
+                 break;
+                 */
+
+                case 8:
+                    /*jsonData = this.buffer.slice(headLen, packageLen).toString('utf8');
                      try {
                      jsonData = JSON.parse(jsonData);
                      } catch (e) {
-                     return this.callback('error', '意外的滚动信息');
-                     }
-                     this.callback('newScrollMessage', jsonData);
-                     break;
-                     */
+                     return this.callback('error', '连接握手数据异常');
+                     }*/
+                    this.callback('connected');
+                    break;
 
-                    case 8:
-                        /*jsonData = this.buffer.slice(headLen, packageLen).toString('utf8');
-                         try {
-                         jsonData = JSON.parse(jsonData);
-                         } catch (e) {
-                         return this.callback('error', '连接握手数据异常');
-                         }*/
-                        this.callback('connected');
-                        break;
-
-                    case 17:
-                        this.callback('error', 'Server Updated');
-                        break;
-                }
-
-                this.buffer = this.buffer.slice(packageLen);
-
-            }catch (e){
-                console.log(e);
+                case 17:
+                    this.callback('error', 'Server Updated');
+                    break;
             }
 
+            this.buffer = this.buffer.slice(packageLen);
         }
     };
     this.buffer = parser; //缓冲区
