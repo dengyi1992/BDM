@@ -59,7 +59,12 @@ function Client() {
         if (!parser.callback) return;
 
         this.buffer = Buffer.concat([this.buffer, data]);
-        this.packetParser();
+        try {
+            this.packetParser();
+
+        }catch (e){
+            console.log(e);
+        }
     };
 
     /**
