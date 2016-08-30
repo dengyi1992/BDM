@@ -9,6 +9,9 @@ var myEvents = new EventEmitter();
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var request = require("request");
+var schedule = require('node-schedule');
+var rule = new schedule.RecurrenceRule();
+rule.second = 0;
 
 var app = express();
 
@@ -59,31 +62,61 @@ app.use(function (err, req, res, next) {
 });
 var Bi = require('./model/Bi');
 var config = require("./config.js");
-var rooms = [];
-request('http://120.27.94.166:2999/getRooms?platform=bilibli&topn=' + config.topn, function (error, response, body) {
-    if (error) {
-        return console.log(error)
-    }
-    var parse = JSON.parse(body);
-    for(var i=0;i<parse.data.length;i++){
-        var roomId = parse.data[i].room_id;
-        rooms.push(parseInt(roomId));
-    }
-    // rooms.push(55041);
+var page = 1;
+schedule.scheduleJob(rule, function () {
+    var options = {
+        method: 'GET',
+        url: 'http://live.bilibili.com/area/liveList',
+        qs: {area: 'all', order: 'online', page: '' + page}
+    };
 
-    // rooms.push(427434);
-
-    myEvents.on("dengyi", function (room) {
-        Bi.Bi(room);
+    request(options, function (error, response, body) {
+        if (error) return console.log(error);
+        var parse = JSON.parse(body);
+        var rooms = [];
+        for (var i = 0; i < parse.data.length; i++) {
+            var roomId = parse.data[i].roomid;
+            rooms.push(parseInt(roomId));
+        }
+        myEvents.on("dengyi", function (room) {
+            Bi.Bi(room);
+        });
+        for (var i = 0; i < rooms.length; i++) {
+            console.log("-------------");
+            myEvents.emit("dengyi", rooms[i]);
+        }
+        // console.log(body);
     });
-    for (var i = 0; i < rooms.length; i++) {
-        console.log("-------------");
-
-        myEvents.emit("dengyi", rooms[i]);
-
+    if (page > 30) {
+        this.cancel();
+        page = 1;
     }
+
 });
 
+// request('http://120.27.94.166:2999/getRooms?platform=bilibli&topn=' + config.topn, function (error, response, body) {
+//     if (error) {
+//         return console.log(error)
+//     }
+//     var parse = JSON.parse(body);
+//     for (var i = 0; i < parse.data.length; i++) {
+//         var roomId = parse.data[i].room_id;
+//         rooms.push(parseInt(roomId));
+//     }
+//     // rooms.push(55041);
+//
+//     // rooms.push(427434);
+//
+//     myEvents.on("dengyi", function (room) {
+//         Bi.Bi(room);
+//     });
+//     for (var i = 0; i < rooms.length; i++) {
+//         console.log("-------------");
+//
+//         myEvents.emit("dengyi", rooms[i]);
+//
+//     }
+// });
 
 
 module.exports = app;
