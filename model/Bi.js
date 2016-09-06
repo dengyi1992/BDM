@@ -33,10 +33,14 @@ exports.Bi = function (roomid) {
         }
     });
     client.on('connected', function () {
+        map.set(roomid,true);
         console.log('connected')
     });
     client.on('login_success', function (data) {
         console.log()
+    });
+    client.on('close',function () {
+        map.set(roomid,false);
     });
     client.connect(roomid);
 };
