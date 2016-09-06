@@ -9,9 +9,7 @@ var myEvents = new EventEmitter();
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var request = require("request");
-var schedule = require('node-schedule');
-var rule = new schedule.RecurrenceRule();
-rule.second = 0;
+var HashMap = require("hashmap").HashMap;
 
 var app = express();
 
@@ -60,68 +58,49 @@ app.use(function (err, req, res, next) {
         error: {}
     });
 });
+var time=[];
+for(var i=0;i<60;i+=15){
+    time.push(i);
+}
+map = new HashMap();
 var Bi = require('./model/Bi');
 var config = require("./config.js");
-var page = 1;
-schedule.scheduleJob(rule, function () {
-    var options = {
-        method: 'GET',
-        url: 'http://live.bilibili.com/area/liveList',
-        qs: {area: 'all', order: 'online', page: '' + page}
-    };
+var rooms = [];
+var schedule = require('node-schedule');
+var rule = new schedule.RecurrenceRule();
+var time=[];
+for(var i=0;i<60;i+=15){
+    time.push(i);
+}
+rule.minute=time;
+schedule.scheduleJob(rule,function () {
+    request('http://120.27.94.166:2999/getRooms?platform=bilibli&topn=' + config.topn, function (error, response, body) {
+        if (error) {
+            return console.log(error)
+        }
+        var parse = JSON.parse(body);
+        for(var i=0;i<parse.data.length;i++){
+            var roomId = parse.data[i].room_id;
+            rooms.push(parseInt(roomId));
+        }
+        // rooms.push(55041);
 
-    request(options, function (error, response, body) {
-        if (error) return console.log(error);
-        try {
-            var parse = JSON.parse(body);
-            var rooms = [];
-            for (var i = 0; i < parse.data.length; i++) {
-                var roomId = parse.data[i].roomid;
-                rooms.push(parseInt(roomId));
-            }
-            myEvents.on("dengyi", function (room) {
-                Bi.Bi(room);
-            });
-            for (var i = 0; i < rooms.length; i++) {
-                console.log("-------------");
+        // rooms.push(427434);
+
+        myEvents.on("dengyi", function (room) {
+            Bi.Bi(room);
+        });
+        for (var i = 0; i < rooms.length; i++) {
+            console.log("-------------");
+            if(map.get(rooms[i])==undefined||!map.get(rooms[i])){
                 myEvents.emit("dengyi", rooms[i]);
             }
-        } catch (e) {
-            console.log(e);
-        }
 
-        // console.log(body);
+        }
     });
-    if (page > 30) {
-        this.cancel();
-        page = 1;
-    }
 
 });
 
-// request('http://120.27.94.166:2999/getRooms?platform=bilibli&topn=' + config.topn, function (error, response, body) {
-//     if (error) {
-//         return console.log(error)
-//     }
-//     var parse = JSON.parse(body);
-//     for (var i = 0; i < parse.data.length; i++) {
-//         var roomId = parse.data[i].room_id;
-//         rooms.push(parseInt(roomId));
-//     }
-//     // rooms.push(55041);
-//
-//     // rooms.push(427434);
-//
-//     myEvents.on("dengyi", function (room) {
-//         Bi.Bi(room);
-//     });
-//     for (var i = 0; i < rooms.length; i++) {
-//         console.log("-------------");
-//
-//         myEvents.emit("dengyi", rooms[i]);
-//
-//     }
-// });
 
 
 module.exports = app;
