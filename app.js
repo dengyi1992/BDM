@@ -58,8 +58,8 @@ app.use(function (err, req, res, next) {
         error: {}
     });
 });
-var time=[];
-for(var i=0;i<60;i+=15){
+var time = [];
+for (var i = 0; i < 60; i += 15) {
     time.push(i);
 }
 map = new HashMap();
@@ -68,18 +68,18 @@ var config = require("./config.js");
 var rooms = [];
 var schedule = require('node-schedule');
 var rule = new schedule.RecurrenceRule();
-var time=[];
-for(var i=0;i<60;i+=15){
+var time = [];
+for (var i = 0; i < 60; i += 15) {
     time.push(i);
 }
-rule.minute=time;
-schedule.scheduleJob(rule,function () {
+rule.minute = time;
+function startDm() {
     request('http://120.27.94.166:2999/getRooms?platform=bilibli&topn=' + config.topn, function (error, response, body) {
         if (error) {
             return console.log(error)
         }
         var parse = JSON.parse(body);
-        for(var i=0;i<parse.data.length;i++){
+        for (var i = 0; i < parse.data.length; i++) {
             var roomId = parse.data[i].room_id;
             rooms.push(parseInt(roomId));
         }
@@ -92,15 +92,19 @@ schedule.scheduleJob(rule,function () {
         });
         for (var i = 0; i < rooms.length; i++) {
             console.log("-------------");
-            if(map.get(rooms[i])==undefined||!map.get(rooms[i])){
+            if (map.get(rooms[i]) == undefined || !map.get(rooms[i])) {
                 myEvents.emit("dengyi", rooms[i]);
             }
 
         }
     });
+}
+schedule.scheduleJob(rule, function () {
+    startDm();
 
 });
 
+startDm();
 
 
 module.exports = app;

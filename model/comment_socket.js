@@ -29,7 +29,7 @@ function Client() {
     // if(!base.host) base.host = DEFAULT_COMMENT_HOST;
     // if(!base.port) base.port = DEFAULT_COMMENT_PORT;
     this.base = {
-        host: "livecmt-1.bilibili.com",
+        host: "dm.live.bilibili.com",
         port: 788
     };
 
